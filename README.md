@@ -31,17 +31,21 @@ $insert->value("Galletas Sponch");
 $insert->value(18);
 
 if ($insert->execute()) {
+  $id_producto = $con->lastInsertId();
+  
   echo "Producto agregado con éxito";
 }
 ```
 #### Patrones en INSERT
-Un ejemplo práctico de patrones al utilizar el método value, es cuando queremos agregar un valor encriptado con AES_ENCRYPT.
+Un ejemplo práctico de patrones al utilizar el método *value*, es cuando queremos agregar un valor encriptado con AES_ENCRYPT.
 ```php
 $insert = $con->insert("usuarios", "Nombre_Usuario, Contrasena");
 $insert->value("domingofh31");
 $insert->value("12345", "AES_ENCRYPT({val}, 'SECRET')");
 
 if ($insert->execute()) {
+  $id_usuario = $con->lastInsertId();
+  
   echo "Usuario agregado con éxito";
 }
 ```
@@ -97,7 +101,7 @@ $select->where_and("Contrasena", "=", "12345", "{cam} {rel} AES_DECRYPT({val}, '
 
 $login = $select->execute();
 ```
-- Selección específica de ventas por empleados usando operador IN.
+- Selección específica de ventas por empleados usando el operador IN.
 ATENCIÓN Se recomienda uso de funciones limpiadoras de caracteres para evitar inyecciones SQL.
 ```php
 $select = $con->select("ventas", "Id_Venta, Nombre_Empleado, DATE_FORMAT(Fecha_Hora, '%d/%m/%Y %H:%i')");
@@ -105,4 +109,50 @@ $select->innerjoin("ON empleados.Id_Empleado = ventas.Empleado");
 $select->where("Id_Empleado", "IN", "220297", "{cam} {rel} ({val}, '220299', '200300')");
 
 $ventas = $select->execute();
+```
+
+### UPDATE
+Contiene una clase en la cual pasaremos el *nombre de la tabla* omo parametro del constructor. Esta clase tiene una variedad de métodos, por ejemplo *set*, *where*, *where_and* y *where_or*.
+```php
+$update = $con->update("productos");
+$update->set("Nombre_Producto", "Galletas Sponch");
+$update->set("Precio", 18);
+$update->where("Id_Producto", "=", 202201);
+
+if ($update->execute()) {
+  echo "Producto modificado con éxito";
+}
+```
+#### Patrones en UPDATE
+Un ejemplo práctico de patrones al utilizar el método *set*, es cuando queremos reducir las existencias de un producto.
+```php
+$update = $con->update("productos");
+$update->set("Existencias", -1, "Existencias + {val}");
+$update->where("Id_Producto", "=", 202201);
+
+if ($update->execute()) {
+  echo "Existencias reducidas con éxito";
+}
+```
+
+### DELETE
+Contiene una clase en la cual pasaremos el *nombre de la tabla* omo parametro del constructor. Esta clase tiene una variedad de métodos, por ejemplo *where*, *where_and* y *where_or*.
+```php
+$delete = $con->delete("productos");
+$delete->where("Id_Producto", "=", 202201);
+
+if ($delete->execute()) {
+  echo "Producto eliminado con éxito";
+}
+```
+#### Patrones en DELETE
+Un ejemplo práctico de patrones al utilizar el método *where*, eliminar productos específicos usando el operador IN.
+ATENCIÓN Se recomienda uso de funciones limpiadoras de caracteres para evitar inyecciones SQL.
+```php
+$delete = $con->delete("productos");
+$delete->where("Id_Producto", "IN", 202201, "{cam} {rel} ({val}, 202202, 202203, 2022204)");
+
+if ($delete->execute()) {
+  echo "Productos eliminados con éxito";
+}
 ```
