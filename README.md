@@ -67,7 +67,7 @@ $productos = $select->execute();
 Veamos un ejemplo gradual con una consulta de ventas:
 ```php
 $select = $con->select("ventas", "Id_Venta, Nombre_Empleado, DATE_FORMAT(Fecha_Hora, '%d/%m/%Y %H:%i')");
-$select->innerjoin("ON empleados.Id_Empleado = ventas.Empleado");
+$select->innerjoin("empleados ON empleados.Id_Empleado = ventas.Empleado");
 
 $ventas = $select->execute();
 ```
