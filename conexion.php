@@ -23,6 +23,11 @@ class Conexion {
     public $where;
 
     /**
+    * Clausula HAVING
+    */
+    public $having;
+
+    /**
     * Arreglo de valores para condiciones en el WHERE
     */
     public $binds;
@@ -224,7 +229,60 @@ class Conexion {
 
 
     /**
-    * Función para añadir condiciones en la clausula WHERE
+    * Función para añadir condiciones en la clausula WHERE/HAVING
+    *
+    * @param string $clause Clausula
+    * @param string $cam Campo condición
+    * @param string $rel Operador relacional
+    * @param string $val Valor para condición
+    * @param string $pattern Servirá para maquetar el puntero del valor de condición
+    * @return void Añadidura de condición a la clausula WHERE
+    */
+    function addCondition($clause, $cam, $rel, $val, $pattern) {
+        if ($clause == "WHERE") {
+            $where      = $this->where;
+            $clause_cnt = $where;
+        }
+        elseif ($clause == "HAVING") {
+            $having = $this->having;
+            $clause_cnt = $having;
+        }
+
+        $clause_cnt = "$clause_cnt $pattern";
+        $clause_cnt = preg_replace('/{cam}/', $cam, $clause_cnt);
+        $clause_cnt = preg_replace('/{rel}/', $rel, $clause_cnt);
+
+        $binds = $this->binds;
+
+        if (strpos($clause_cnt, "{val}") !== false) {
+            $count      = 0;
+            $clause_cnt = preg_replace('/{val}/', "?", $clause_cnt, -1, $count);
+    
+            if ($rel == "LIKE") {
+                $val = "%$val%";
+            }
+    
+            if ($count > 1) {
+                for ($i = 1; $i < $count; $i++) {
+                    $binds[] = $val;
+                }
+            }
+    
+            $binds[] = $val;
+        }
+
+        $this->binds = $binds;
+
+        if ($clause == "WHERE") {
+            $this->where = $clause_cnt;
+        }
+        elseif ($clause == "HAVING") {
+            $this->having = $clause_cnt;
+        }
+    }
+
+    /**
+    * Función para añadir condiciones en la clausula WHERE/HAVING (Une condiciones con el /AND/OR)
     *
     * @param string $cam Campo condición
     * @param string $rel Operador relacional
@@ -232,82 +290,63 @@ class Conexion {
     * @param string $pattern Servirá para maquetar el puntero del valor de condición
     * @return void Añadidura de condición a la clausula WHERE
     */
-    function addCondition($cam, $rel, $val, $pattern="{cam} {rel} {val}") {
-        $where = $this->where;
-        $binds = $this->binds;
-
-        $count = 0;
-
-        $where = "$where $pattern";
-        $where = preg_replace('/{cam}/', $cam, $where);
-        $where = preg_replace('/{rel}/', $rel, $where);
-        $where = preg_replace('/{val}/', "?", $where, -1, $count);
-
-        if ($rel == "LIKE") {
-            $val = "%$val%";
+    function clause_cnt($clause, $cnt, $cam, $rel, $val, $pattern) {
+        if ($clause == "WHERE") {
+            $where       = $this->where;
+            $where       = ($cnt ? "" : $clause) . "$where $cnt";
+            $this->where = $where;
+        }
+        elseif ($clause == "HAVING") {
+            $having       = $this->having;
+            $having       = ($cnt ? "" : $clause) . "$having $cnt";
+            $this->having = $having;
         }
 
-        if ($count > 1) {
-            for ($i = 1; $i < $count; $i++) {
-                $binds[] = $val;
-            }
-        }
-
-        $binds[] = $val;
-
-        $this->where = $where;
-        $this->binds = $binds;
+        $this->addCondition($clause, $cam, $rel, $val, $pattern);
     }
 
     /**
     * Función para añadir condiciones en la clausula WHERE (Inicializa la clausula)
     *
-    * @param string $cam Campo condición
-    * @param string $rel Operador relacional
-    * @param string $val Valor para condición
-    * @param string $pattern Servirá para maquetar el puntero del valor de condición
-    * @return void Añadidura de condición a la clausula WHERE
     */
     function where($cam, $rel, $val, $pattern="{cam} {rel} {val}") {
-        $where = $this->where;
-        $where = "WHERE";
-        $this->where = $where;
-
-        $this->addCondition($cam, $rel, $val, $pattern);
+        $this->clause_cnt("WHERE", "", $cam, $rel, $val, $pattern);
     }
 
     /**
     * Función para añadir condiciones en la clausula WHERE (Une condiciones con el AND)
-    *
-    * @param string $cam Campo condición
-    * @param string $rel Operador relacional
-    * @param string $val Valor para condición
-    * @param string $pattern Servirá para maquetar el puntero del valor de condición
-    * @return void Añadidura de condición a la clausula WHERE
     */
     function where_and($cam, $rel, $val, $pattern="{cam} {rel} {val}") {
-        $where = $this->where;
-        $where = "$where AND";
-        $this->where = $where;
-
-        $this->addCondition($cam, $rel, $val, $pattern);
+        $this->clause_cnt("WHERE", "AND", $cam, $rel, $val, $pattern);
     }
 
     /**
     * Función para añadir condiciones en la clausula WHERE (Une condiciones con el OR)
-    *
-    * @param string $cam Campo condición
-    * @param string $rel Operador relacional
-    * @param string $val Valor para condición
-    * @param string $pattern Servirá para maquetar el puntero del valor de condición
-    * @return void Añadidura de condición a la clausula WHERE
     */
     function where_or($cam, $rel, $val, $pattern="{cam} {rel} {val}") {
-        $where = $this->where;
-        $where = "$where OR";
-        $this->where = $where;
+        $this->clause_cnt("WHERE", "OR", $cam, $rel, $val, $pattern);
+    }
 
-        $this->addCondition($cam, $rel, $val, $pattern);
+    /**
+    * Función para añadir condiciones en la clausula HAVING (Inicializa la clausula)
+    *
+    */
+    function having($cam, $rel, $val, $pattern="{cam} {rel} {val}") {
+        $this->clause_cnt("HAVING", "", $cam, $rel, $val, $pattern);
+    }
+
+    /**
+    * Función para añadir condiciones en la clausula HAVING (Une condiciones con el AND)
+    */
+    function having_and($cam, $rel, $val, $pattern="{cam} {rel} {val}") {
+        $this->clause_cnt("HAVING", "AND", $cam, $rel, $val, $pattern);
+    }
+
+    /**
+    * Función para añadir condiciones en la clausula HAVING (Une condiciones con el OR)
+    */
+    function having_or($cam, $rel, $val, $pattern="{cam} {rel} {val}") {
+        $this->clause_cnt("HAVING", "OR", $cam, $rel, $val, $pattern);
     }
 }
 
@@ -450,6 +489,7 @@ class Select extends Conexion {
         $this->joins   = "";
         $this->where   = "";
         $this->groupby = "";
+        $this->having  = "";
         $this->orderby = "";
         $this->limit   = "";
     }
@@ -535,12 +575,14 @@ class Select extends Conexion {
         $joins   = $this->joins;
         $where   = $this->where;
         $groupby = $this->groupby;
+        $having  = $this->having;
         $orderby = $this->orderby;
         $limit   = $this->limit;
 
         if ($joins) {$sql = "$sql\n$joins";}
         if ($where) {$sql = "$sql\n$where";}
         if ($groupby) {$sql = "$sql\n$groupby";}
+        if ($having) {$sql = "$sql\n$having";}
         if ($orderby) {$sql = "$sql\n$orderby";}
         if ($limit) {$sql = "$sql\n$limit";}
 
