@@ -14,13 +14,18 @@ $con = new Conexion(array(
 ## Patrones
 En general en cada clase encontraremos este parametro el cual tendra valores por defecto según cada clase, al ser un valor predeterminado no tiene ninguna restricción y es personalizable al adicionarlo como parametro en el método que corresponda.
 
-| **Clase**  | **Método**                       | **Pattern**       |
-| :--------- | :------------------------------: | ----------------: |
-| *Insert*   | *value*                          | {val}             |
-| *Select*   | *where*, *where_and*, *where_or* | {cam} {rel} {val} |
-| *Update*   | *set*                            | {val}             |
-|            | *where*, *where_and*, *where_or* | {cam} {rel} {val} |
-| *Delete*   | *where*, *where_and*, *where_or* | {cam} {rel} {val} |
+| **Clase**  | **Método**                          | **PARAM:Pattern** |
+| :--------- | :---------------------------------: | ----------------: |
+| *Insert*   | *value*                             | {val}             |
+| *Select*   | *innerjoin*                         |                   |
+|            | *where*, *where_and*, *where_or*    | {cam} {rel} {val} |
+|            | *groupby*                           |                   |
+|            | *having*, *having_and*, *having_or* | {cam} {rel} {val} |
+|            | *orderby*                           |                   |
+|            | *limit*                             |                   |
+| *Update*   | *set*                               | {val}             |
+|            | *where*, *where_and*, *where_or*    | {cam} {rel} {val} |
+| *Delete*   | *where*, *where_and*, *where_or*    | {cam} {rel} {val} |
 
 ## Instrucciones  DML (INSERT, SELECT, UPDATE, DELETE)
 ### INSERT
@@ -69,7 +74,7 @@ $ventas = $select->execute();
 - Agrupemos ventas por empleado
 ```php
 $select = $con->select("ventas", "Id_Venta, Nombre_Empleado, DATE_FORMAT(Fecha_Hora, '%d/%m/%Y %H:%i')");
-$select->innerjoin("ON empleados.Id_Empleado = ventas.Empleado");
+$select->innerjoin("empleados ON empleados.Id_Empleado = ventas.Empleado");
 $select->groupby("Fecha_Hora");
 
 $ventas = $select->execute();
@@ -77,7 +82,7 @@ $ventas = $select->execute();
 - Ordenemos ventas por fecha y hora
 ```php
 $select = $con->select("ventas", "Id_Venta, Nombre_Empleado, DATE_FORMAT(Fecha_Hora, '%d/%m/%Y %H:%i')");
-$select->innerjoin("ON empleados.Id_Empleado = ventas.Empleado");
+$select->innerjoin("empleados ON empleados.Id_Empleado = ventas.Empleado");
 $select->orderby("Fecha_Hora ASC");
 
 $ventas = $select->execute();
@@ -85,8 +90,8 @@ $ventas = $select->execute();
 - Agreguemos una unión más y consultemos una venta en especifico:
 ```php
 $select = $con->select("ventas", "Id_Venta, Nombre_Empleado, DATE_FORMAT(Fecha_Hora, '%d/%m/%Y %H:%i'), SUM(Precio_Venta) AS Total");
-$select->innerjoin("ON empleados.Id_Empleado = ventas.Empleado");
-$select->innerjoin("ON detalles_ventas.Venta = ventas.Id_Venta");
+$select->innerjoin("empleados ON empleados.Id_Empleado = ventas.Empleado");
+$select->innerjoin("detalles_ventas ON detalles_ventas.Venta = ventas.Id_Venta");
 $select->where("Id_Venta", "=", 190053241);
 
 $ventas = $select->execute();
@@ -106,7 +111,7 @@ ATENCIÓN Se recomienda uso de funciones limpiadoras de caracteres para evitar i
 ```php
 $select = $con->select("ventas", "Id_Venta, Nombre_Empleado, DATE_FORMAT(Fecha_Hora, '%d/%m/%Y %H:%i')");
 $select->innerjoin("ON empleados.Id_Empleado = ventas.Empleado");
-$select->where("Id_Empleado", "IN", "220297", "{cam} {rel} ({val}, '220299', '200300')");
+$select->where("Id_Empleado", "IN", NULL, "{cam} {rel} ('220297', '220299', '200300')");
 
 $ventas = $select->execute();
 ```
@@ -150,7 +155,7 @@ Un ejemplo práctico de patrones al utilizar el método *where*, eliminar produc
 ATENCIÓN Se recomienda uso de funciones limpiadoras de caracteres para evitar inyecciones SQL.
 ```php
 $delete = $con->delete("productos");
-$delete->where("Id_Producto", "IN", 202201, "{cam} {rel} ({val}, 202202, 202203, 2022204)");
+$delete->where("Id_Producto", "IN", NULL, "{cam} {rel} (202201, 202202, 202203, 2022204)");
 
 if ($delete->execute()) {
   echo "Productos eliminados con éxito";
