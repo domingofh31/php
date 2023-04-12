@@ -8,7 +8,7 @@
  *      Select:   Permite realizar un select con anti-inyección de código con todas sus clausulas
  *      Update:   Permite realizar un update con anti-inyección de código con todas sus clausulas
  *      Delete:   Permite realizar un delete con anti-inyección de código con todas sus clausulas
- * @author Desarrollador Rápido desarrolladorrapido@gmail.com
+ * @author Ing. Domingo Fraga Hernandez
  */
 
 class Conexion {
