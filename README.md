@@ -75,7 +75,7 @@ $ventas = $select->execute();
 ```php
 $select = $con->select("ventas", "Id_Venta, Nombre_Empleado, DATE_FORMAT(Fecha_Hora, '%d/%m/%Y %H:%i')");
 $select->innerjoin("empleados ON empleados.Id_Empleado = ventas.Empleado");
-$select->groupby("Fecha_Hora");
+$select->groupby("Nombre_Empleado");
 
 $ventas = $select->execute();
 ```
