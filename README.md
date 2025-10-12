@@ -141,7 +141,7 @@ if ($update->execute()) {
 ```
 
 ### DELETE
-Contiene una clase en la cual pasaremos el *nombre de la tabla* omo parametro del constructor. Esta clase tiene una variedad de métodos, por ejemplo *where*, *where_and* y *where_or*.
+Contiene una clase en la cual pasaremos el *nombre de la tabla* como parametro del constructor. Esta clase tiene una variedad de métodos, por ejemplo *where*, *where_and* y *where_or*.
 ```php
 $delete = $con->delete("productos");
 $delete->where("Id_Producto", "=", 202201);
